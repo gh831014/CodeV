@@ -1,0 +1,5 @@
+{
+  "name": "CodeLogic Visualizer",
+  "description": "一个代码逻辑原理解读工具，通过 AI 分析代码并生成交互式逻辑流程动画。",
+  "requestFramePermissions": []
+}
