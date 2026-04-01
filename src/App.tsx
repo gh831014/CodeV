@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { analyzeCode, analyzeDirectory, AnalysisResult, ModelConfig } from './services/gemini';
+import { FlowVisualizer } from './components/FlowVisualizer';
+import { AgentInterpretation } from './components/AgentInterpretation';
+import { ModuleGraph } from './components/ModuleGraph';
+import { ModelSettings } from './components/ModelSettings';
 import { 
   Code2, 
   FileCode, 
@@ -15,12 +20,9 @@ import {
   LayoutGrid,
   GitBranch,
   Network,
-  FolderSearch
+  FolderSearch,
+  Settings
 } from 'lucide-react';
-import { analyzeCode, analyzeDirectory, AnalysisResult } from './services/gemini';
-import { FlowVisualizer } from './components/FlowVisualizer';
-import { AgentInterpretation } from './components/AgentInterpretation';
-import { ModuleGraph } from './components/ModuleGraph';
 
 export default function App() {
   const [files, setFiles] = useState<string[]>([]);
@@ -35,6 +37,10 @@ export default function App() {
   const [projectRoot, setProjectRoot] = useState<string>('');
   const [rootInput, setRootInput] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'overview' | 'flow' | 'graph'>('overview');
+  const [modelConfig, setModelConfig] = useState<ModelConfig>({
+    provider: 'gemini',
+    modelName: 'gemini-3.1-pro-preview'
+  });
 
   useEffect(() => {
     fetchCwd();
@@ -85,7 +91,7 @@ export default function App() {
     if (!fileContent || !selectedFile) return;
     setIsAnalyzing(true);
     try {
-      const result = await analyzeCode(fileContent, selectedFile);
+      const result = await analyzeCode(fileContent, selectedFile, modelConfig);
       setAnalysis(result);
       setActiveFlowIndex(0);
       setActiveTab('overview');
@@ -106,7 +112,7 @@ export default function App() {
       if (!res.ok) throw new Error('Failed to fetch directory contents');
       const data = await res.json();
       
-      const result = await analyzeDirectory(data.contents, projectRoot);
+      const result = await analyzeDirectory(data.contents, projectRoot, modelConfig);
       setAnalysis(result);
       setActiveFlowIndex(0);
       setActiveTab('overview');
@@ -130,6 +136,13 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1 bg-zinc-900/50 border border-white/5 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{modelConfig.modelName}</span>
+          </div>
+
+          <ModelSettings config={modelConfig} onSave={setModelConfig} />
+
           {analysis && (
             <div className="flex bg-zinc-900 rounded-full p-1 border border-white/5 mr-4">
               <button 

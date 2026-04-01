@@ -28,8 +28,20 @@ export const ModuleGraph: React.FC<Props> = ({ graph }) => {
 
     svg.call(zoom);
 
-    const simulation = d3.forceSimulation<any>(graph.nodes)
-      .force('link', d3.forceLink<any, any>(graph.edges).id((d: any) => d.id).distance(150))
+    // Create copies and map from/to to source/target for D3 compatibility
+    const nodes = graph.nodes.map(n => ({ ...n }));
+    const nodeIds = new Set(nodes.map(n => n.id));
+    
+    const links = graph.edges
+      .filter(e => nodeIds.has(e.from) && nodeIds.has(e.to))
+      .map(e => ({
+        source: e.from,
+        target: e.to,
+        relationship: e.relationship
+      }));
+
+    const simulation = d3.forceSimulation<any>(nodes)
+      .force('link', d3.forceLink<any, any>(links).id((d: any) => d.id).distance(150))
       .force('charge', d3.forceManyBody().strength(-500))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide().radius(60));
@@ -50,7 +62,7 @@ export const ModuleGraph: React.FC<Props> = ({ graph }) => {
 
     const link = g.append('g')
       .selectAll('line')
-      .data(graph.edges)
+      .data(links)
       .join('line')
       .attr('stroke', '#333')
       .attr('stroke-opacity', 0.6)
@@ -59,7 +71,7 @@ export const ModuleGraph: React.FC<Props> = ({ graph }) => {
 
     const node = g.append('g')
       .selectAll('g')
-      .data(graph.nodes)
+      .data(nodes)
       .join('g')
       .call(d3.drag<SVGGElement, any>()
         .on('start', dragstarted)
