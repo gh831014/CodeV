@@ -205,7 +205,12 @@ export const FlowVisualizer: React.FC<FlowVisualizerProps> = ({ flow }) => {
                     y="-45"
                     width="180"
                     height="90"
-                    fill={isActive ? "#00ffff" : "#fff"}
+                    fill={isActive ? "#00ffff" : (
+                      node.type === 'agent' ? '#10b981' :
+                      node.type === 'prompt' ? '#06b6d4' :
+                      node.type === 'tool' ? '#f59e0b' :
+                      '#fff'
+                    )}
                     stroke="#000"
                     strokeWidth="6"
                     className="transition-colors duration-200"

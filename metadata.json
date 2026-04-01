@@ -1,5 +1,5 @@
 {
-  "name": "CodeLogic Visualizer",
-  "description": "一个代码逻辑原理解读工具，通过 AI 分析代码并生成交互式逻辑流程动画。",
+  "name": "AgentEngine Visualizer",
+  "description": "AI Agent 驾驭工程体系可视化分析工具，支持约束解读、Prompt 封装分析及模块图谱展示。",
   "requestFramePermissions": []
 }

@@ -77,6 +77,42 @@ async function startServer() {
     res.json({ cwd: process.cwd() });
   });
 
+  // API to get all file contents in a directory for analysis
+  app.get("/api/directory-content", async (req, res) => {
+    try {
+      const customRoot = (req.query.root as string) || process.cwd();
+      const contents: { [path: string]: string } = {};
+
+      async function scan(dir: string) {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = path.relative(customRoot, fullPath);
+
+          if (entry.isDirectory()) {
+            if (entry.name !== "node_modules" && !entry.name.startsWith(".")) {
+              await scan(fullPath);
+            }
+          } else {
+            const ext = path.extname(entry.name);
+            if ([".ts", ".tsx", ".js", ".jsx", ".py", ".go", ".java"].includes(ext)) {
+              const content = await fs.readFile(fullPath, "utf-8");
+              // Limit individual file size to 50KB to prevent massive payloads
+              if (content.length < 50000) {
+                contents[relativePath] = content;
+              }
+            }
+          }
+        }
+      }
+
+      await scan(customRoot);
+      res.json({ contents, root: customRoot });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to read directory contents" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
